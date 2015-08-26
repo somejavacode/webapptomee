@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tomee>
+
+    <!--
+    #
+    #  The <Deployments> element can be used to configure file
+    #  paths where OpenEJB should look for ejb jars or ear files.
+    #
+    #  See http://openejb.apache.org/3.0/deployments.html
+    #
+    #  The below entry is simply a default and can be changed or deleted
+    -->
+
+    <!-- http://tomee.apache.org/datasource-config.html
+         http://tomee.apache.org/configuring-datasources.html
+         http://tomee.apache.org/containers-and-resources.html -->
+
+    <Resource id="TEST-APP" type="DataSource">
+        jdbcDriver = org.h2.Driver
+        <!-- tcp variant: need to start server: "java -cp h2-1.3.170.jar org.h2.tools.Server -tcp -web"
+             data file will be located in working directory of server -->
+         jdbcUrl = jdbc:h2:tcp://localhost/testapp;AUTO_RECONNECT=TRUE
+        <!--jdbcUrl = jdbc:h2:file:/tmp/h2/testapp;DB_CLOSE_ON_EXIT=FALSE-->
+        userName = sa
+        password = sa
+        jtaManaged = true
+        testOnBorrow = true
+        maxWaitTime = 30000 <!-- max wait for pool checkout (milliseconds) -->
+        validationQuery = select 1
+        <!--logSql = true --> <!-- logs a lot! -->
+    </Resource>
+
+
+
+</tomee>
