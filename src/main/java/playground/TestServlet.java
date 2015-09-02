@@ -8,7 +8,9 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Arrays;
 import java.util.Random;
 import java.util.logging.Level;
 
@@ -52,6 +54,49 @@ public class TestServlet extends HttpServlet {
             resp.getOutputStream().print(echo);
             resp.getOutputStream().close();
         }
+        else if (up > 0) {
+            // String type = req.getHeader("Content-Type");  // don't care, assume "application/octet-stream"
+            InputStream is = req.getInputStream();
+            Random rand = randSeed == 0 ? new Random() : new Random(randSeed);
+            int buffSize = 8192;
+            byte[] upBuff = new byte[buffSize];
+            int remaining = up;  // remaining bytes.
+            while (remaining > 0) {
+                int bytes = is.read(upBuff);
+                if (bytes == -1) {
+                    throw new RuntimeException("missing random upstream bytes: " + remaining);
+                }
+                byte[] randBuff = new byte[bytes];
+                rand.nextBytes(randBuff);  // no signature to fill part of byte array
+
+                if (!Arrays.equals(upBuff, randBuff)) {
+                    throw new RuntimeException("invalid random upstream bytes.");
+                }
+                remaining -= buffSize;
+                if (throttle > 0) {
+                    try {
+                        Thread.sleep(throttle);
+                    }
+                    catch (InterruptedException e) {
+                        LOG.warn("interrupted throttle sleep.");
+                    }
+                }
+            }
+
+//            byte[] lastUpBytes = new byte[remaining];
+//            byte[] lastRandBytes = new byte[remaining];
+//            is.read(lastUpBytes);
+//            rand.nextBytes(lastRandBytes);
+//            if (!Arrays.equals(upBuff, randBuff)) {
+//                throw new RuntimeException("invalid random upstream");
+//            }
+//            int eof = is.read();  // assume eof here
+//            if (eof == -1) {
+//                throw new RuntimeException("upstream is too large.");
+//            }
+            is.close();
+
+        }
         else if (down > 0) {
             // binary random response....
             resp.setHeader("Content-Type", "application/octet-stream");  // no alternative for these literals?
@@ -75,7 +120,6 @@ public class TestServlet extends HttpServlet {
                     }
                 }
             }
-
             byte[] lastBytes = new byte[remaining];
             rand.nextBytes(lastBytes);
             os.write(lastBytes);

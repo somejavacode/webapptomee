@@ -32,7 +32,7 @@
     <category name="org.apache.catalina.util.LifecycleBase"><priority value="INFO"/></category>
     <category name="org.apache.tomcat.util.scan.StandardJarScanner"><priority value="INFO"/></category>
 
-    <category name="playground.TestServlet"><priority value="WARN"/></category>
+    <category name="playground.TestServlet"><priority value="INFO"/></category>
 
 
 
