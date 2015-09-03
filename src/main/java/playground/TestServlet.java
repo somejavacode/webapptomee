@@ -26,7 +26,7 @@ public class TestServlet extends HttpServlet {
 
     @Override
     protected void doGet(final HttpServletRequest req, final HttpServletResponse resp) throws ServletException, IOException {
-        String  url = req.getRequestURI();
+        String url = req.getRequestURI();
         String qs = req.getQueryString();
         if (qs != null) {
             url += "?" + qs;
@@ -57,45 +57,45 @@ public class TestServlet extends HttpServlet {
         else if (up > 0) {
             // String type = req.getHeader("Content-Type");  // don't care, assume "application/octet-stream"
             InputStream is = req.getInputStream();
-            Random rand = randSeed == 0 ? new Random() : new Random(randSeed);
-            int buffSize = 8192;
-            byte[] upBuff = new byte[buffSize];
-            int remaining = up;  // remaining bytes.
-            while (remaining > 0) {
-                int bytes = is.read(upBuff);
-                if (bytes == -1) {
-                    throw new RuntimeException("missing random upstream bytes: " + remaining);
-                }
-                byte[] randBuff = new byte[bytes];
-                rand.nextBytes(randBuff);  // no signature to fill part of byte array
+            try {
+                Random rand = randSeed == 0 ? new Random() : new Random(randSeed);
+                int buffSize = 8192;
+                byte[] upBuff = new byte[buffSize];
+                int remaining = up;  // remaining bytes.
+                while (remaining > 0) {
+                    int bytes = is.read(upBuff);
+                    if (bytes == -1) {
+                        throw new RuntimeException("missing random upstream bytes: " + remaining);
+                    }
+                    byte[] randBuff = new byte[bytes];
+                    rand.nextBytes(randBuff);  // no signature to fill part of byte array
 
-                if (!Arrays.equals(upBuff, randBuff)) {
-                    throw new RuntimeException("invalid random upstream bytes.");
+                    byte[] usedBuff = upBuff;
+                    if (bytes < buffSize) {
+                        usedBuff = Arrays.copyOf(upBuff, bytes);
+                    }
+                    if (!Arrays.equals(usedBuff, randBuff)) {
+                        throw new RuntimeException("invalid random upstream bytes.");
+                    }
+                    remaining -= buffSize;
+
+                    if (throttle > 0) {
+                        try {
+                            Thread.sleep(throttle);
+                        }
+                        catch (InterruptedException e) {
+                            LOG.warn("interrupted throttle sleep.");
+                        }
+                    }
                 }
-                remaining -= buffSize;
-                if (throttle > 0) {
-                    try {
-                        Thread.sleep(throttle);
-                    }
-                    catch (InterruptedException e) {
-                        LOG.warn("interrupted throttle sleep.");
-                    }
+                int eof = is.read();  // check for EOF
+                if (eof != -1) {
+                    throw new RuntimeException("got surplus bytes.");
                 }
             }
-
-//            byte[] lastUpBytes = new byte[remaining];
-//            byte[] lastRandBytes = new byte[remaining];
-//            is.read(lastUpBytes);
-//            rand.nextBytes(lastRandBytes);
-//            if (!Arrays.equals(upBuff, randBuff)) {
-//                throw new RuntimeException("invalid random upstream");
-//            }
-//            int eof = is.read();  // assume eof here
-//            if (eof == -1) {
-//                throw new RuntimeException("upstream is too large.");
-//            }
-            is.close();
-
+            finally {
+                is.close();
+            }
         }
         else if (down > 0) {
             // binary random response....
@@ -133,10 +133,10 @@ public class TestServlet extends HttpServlet {
             LOG.debug("slfj4 debug " + log);
             LOG.info("slfj4 info " + log);
             LOG.warn("slfj4 warn " + log);
-        // CHECKSTYLE:OFF
+            // CHECKSTYLE:OFF
             System.out.println("system out " + log);
             System.err.println("system err " + log);
-        // CHECKSTYLE:ON
+            // CHECKSTYLE:ON
             java.util.logging.Logger julLog = java.util.logging.Logger.getLogger("test logger");
             julLog.log(Level.FINE, "jul fine " + log);
             julLog.log(Level.INFO, "jul info " + log);
@@ -202,7 +202,9 @@ public class TestServlet extends HttpServlet {
         }
     }
 
-    /** fibonacci recursion to burn cpu */
+    /**
+     * fibonacci recursion to burn cpu
+     */
     private long fibonacci(long n) {
         if (n <= 1) {
             return n;
@@ -210,7 +212,9 @@ public class TestServlet extends HttpServlet {
         return fibonacci(n - 1) + fibonacci(n - 2);
     }
 
-    /** fibonacci recursion to burn cpu */
+    /**
+     * fibonacci recursion to burn cpu
+     */
     private double fibonacciDouble(double n) {
         if (n <= 1) {
             return n;
