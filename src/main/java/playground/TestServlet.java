@@ -67,7 +67,7 @@ public class TestServlet extends HttpServlet {
                     if (bytes == -1) {
                         throw new RuntimeException("missing random upstream bytes: " + remaining);
                     }
-                    byte[] randBuff = new byte[bytes];
+                    byte[] randBuff = new byte[bytes]; // TODO: optimize
                     rand.nextBytes(randBuff);  // no signature to fill part of byte array
 
                     byte[] usedBuff = upBuff;
@@ -75,9 +75,13 @@ public class TestServlet extends HttpServlet {
                         usedBuff = Arrays.copyOf(upBuff, bytes);
                     }
                     if (!Arrays.equals(usedBuff, randBuff)) {
+                        LOG.error("wrong random bytes: remaining: " + remaining + " bytes=" + bytes);
                         throw new RuntimeException("invalid random upstream bytes.");
                     }
-                    remaining -= buffSize;
+                    else {
+                        LOG.info("OK bytes. remaining bytes: " + remaining + " bytes=" + bytes);
+                    }
+                    remaining -= bytes;
 
                     if (throttle > 0) {
                         try {
